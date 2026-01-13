@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: smarthotel_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: rizwanzahid
+      POSTGRES_DB: SmartHotelDB
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  ai_service:
+    build: ./ai_service
+    container_name: smarthotel_ai
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  backend:
+    build: ./SmartHotel.Backend
+    container_name: smarthotel_backend
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:5000
+      ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=SmartHotelDB;Username=postgres;Password=rizwanzahid"
+      AI_SERVICE_URL: "http://ai_service:8000"
+    depends_on:
+      - db
+      - ai_service
+    ports:
+      - "5000:5000"
+
+  frontend:
+    build: ./frontend
+    container_name: smarthotel_frontend
+    environment:
+      NODE_ENV: production
+      NEXT_TELEMETRY_DISABLED: "1"
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+
+volumes:
+  postgres_data:

@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="..\build\SmartHotel.Backend.props" />
+</Project>
